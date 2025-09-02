@@ -70,7 +70,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
-        fields = ['uuid', 'name', 'contact_email', 'phone', 'address']
+        fields = ['uuid', 'name', 'contact_email', 'phone', 'address', "vendor_type"]
 
 
 # ----------------------------
@@ -86,7 +86,7 @@ class WarehouseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Warehouse
-        fields = ['uuid', 'name', 'location', 'incharge', 'incharge_id']
+        fields = ['uuid', 'name', 'location', 'incharge', 'incharge_id','created_at', 'updated_at']
 
     def validate_incharge(self, value):
         if value and value.role not in ["admin", "Warehouse-Incharge"]:
@@ -131,7 +131,7 @@ class StockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stock
-        fields = ['uuid', 'product', 'product_id', 'warehouse', 'warehouse_id', 'quantity']
+        fields = ['uuid', 'product', 'product_id', 'warehouse', 'warehouse_id', 'quantity', 'created_at', 'updated_at']
 
 
 # ----------------------------

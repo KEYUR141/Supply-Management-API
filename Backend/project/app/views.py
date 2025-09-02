@@ -9,7 +9,7 @@ from .models import UserProfile, Warehouse, Vendor, Product, Stock, StockTransfe
 from django.shortcuts import get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.decorators import permission_classes
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
@@ -17,18 +17,15 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     - Admins can create/update/delete
     - Others can only view (GET, HEAD, OPTIONS)
     """
-
     def has_permission(self, request, view):
-        # SAFE_METHODS = GET, HEAD, OPTIONS
+        # Allow GET, HEAD, OPTIONS for everyone
         if request.method in permissions.SAFE_METHODS:
             return True
-
-        # Only admins can perform write operations
-        if request.user.is_authenticated:
-            try:
-                return request.user.userprofile.role == "admin"
-            except UserProfile.DoesNotExist:
-                return False
+        # Only allow write/delete for admin
+        if request.user and request.user.is_authenticated:
+            profile = getattr(request.user, "userprofile", None)
+            if profile and profile.role in ["admin", "Admin"]:
+                return True
         return False
 
 class AuthViewSet(viewsets.ViewSet):
@@ -36,7 +33,8 @@ class AuthViewSet(viewsets.ViewSet):
     ViewSet for user registration and login with error handling.
     """
     @action(detail=False, methods=['get'])
-    def get_user(self,request):
+    @permission_classes([IsAuthenticated])
+    def get_user(self, request):
         try:
             user = request.user
             if user.is_authenticated:
@@ -115,12 +113,10 @@ class WarehouseViewSet(viewsets.ModelViewSet):
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
     permission_classes = [IsAdminOrReadOnly]
-    
-    # @authentication_classes([TokenAuthentication]) 
-    # @permission_classes([IsAuthenticated])
+    # permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'])
-    def get_warehouses(self, request):
+    def get(self, request):
         try:
             warehouses = self.queryset
             serializer = self.serializer_class(warehouses, many=True)
@@ -137,7 +133,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True,methods=['post'])
-    def post_warehouse(self, request, pk=None):
+    def post(self, request, pk=None):
         try:
             serializer = self.serializer_class(data=request.data)
             if(serializer.is_valid()):

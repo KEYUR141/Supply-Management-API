@@ -11,13 +11,17 @@ class BaseModel(models.Model):
 
 class UserProfile(BaseModel):
     role_choices = (
-        ('admin','Admin'),
-        ('incharge','Warehouse-Incharge'),
-        ('vendor','Vendor')
+        ('admin', 'Admin'),
+        ('manager', 'Manager'),
+        ('employee', 'Employee'),
+        ('incharge', 'Warehouse-Incharge'),
+        ('vendor', 'Vendor'),
+        ('auditor', 'Auditor'),
     )
     
     user = models.OneToOneField(User,on_delete=models.CASCADE)
-    role = models.CharField(max_length=20,choices=role_choices,default='vendor')
+    role = models.CharField(max_length=20,choices=role_choices,default='employee')
+    #profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)  # <-- added field
 
     def __str__(self):
         return f"{self.uuid} - {self.user.username} - {self.role}"
@@ -32,11 +36,16 @@ class Warehouse(BaseModel):
         return f"{self.uuid} - {self.name} - {self.location} - {self.incharge}"
 
 class Vendor(BaseModel):
+    VENDOR_TYPE_CHOICES = (
+        ('freelancer', 'Freelancer'),
+        ('wholesaler', 'Wholesaler'),
+        ('organization', 'Organization'),
+    )
     name = models.CharField(max_length=100, unique=True)
     contact_email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    user_profile = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'vendor'})
+    vendor_type = models.CharField(max_length=20, choices=VENDOR_TYPE_CHOICES, default='organization')
 
     def __str__(self):
         return self.name
